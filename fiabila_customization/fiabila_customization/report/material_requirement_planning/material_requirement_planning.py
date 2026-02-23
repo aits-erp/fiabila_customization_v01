@@ -68,7 +68,7 @@ def create_material_request_draft(items, item_group_filter=None):
     # Create new MR for each item_group
     for item_group, group_items in grouped_items.items():
         mr = frappe.new_doc("Material Request")
-        mr.material_request_type = "Manufacture"
+        mr.material_request_type = "Purchase"
         mr.transaction_date = nowdate()
         mr.schedule_date = nowdate()
 
