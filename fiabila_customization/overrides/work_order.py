@@ -7,7 +7,7 @@ from erpnext.manufacturing.doctype.work_order.work_order import WorkOrder as ERP
 class CustomWorkOrder(ERPNextWorkOrder):
 
     def before_save(self):
-        super().before_save()  # Let ERPNext do everything first
+        # super().before_save()  # Let ERPNext do everything first Crashes
         self.apply_custom_warehouse_mapping()  # Then overwrite with BOM custom fields
 
     def apply_custom_warehouse_mapping(self):
