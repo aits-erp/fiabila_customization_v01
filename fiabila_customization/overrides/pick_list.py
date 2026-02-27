@@ -1,7 +1,6 @@
 import frappe
 from erpnext.stock.doctype.pick_list.pick_list import get_available_item_locations as original_get_locations
 
-
 BLOCKED_WAREHOUSES = [
     "Work in Progress",
     "Quality Checking"
