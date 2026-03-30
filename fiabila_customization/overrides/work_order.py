@@ -19,23 +19,41 @@ class CustomWorkOrder(ERPNextWorkOrder):
         bom = frappe.get_cached_doc("BOM", self.bom_no)
 
         source_wh = bom.get("custom_source_warehouse")
-        wip_wh = bom.get("custom_workinprogress_warehouse")
-        fg_wh = bom.get("custom_target_warehouse")
 
-        # Set only if present in BOM
-        if source_wh:
-            self.source_warehouse = source_wh
-        if wip_wh:
-            self.wip_warehouse = wip_wh
-        if fg_wh:
-            self.fg_warehouse = fg_wh
+        if not source_wh:
+            return
 
-        # Apply to child table WITHOUT overriding user edits
-        if self.source_warehouse:
-            for row in self.required_items:
-                # Only set if empty OR if you want strict control, remove condition
-                if not row.source_warehouse:
-                    row.source_warehouse = self.source_warehouse
+        # Always enforce
+        self.source_warehouse = source_wh
+
+        for row in self.required_items:
+            row.source_warehouse = source_wh
+
+    # def apply_custom_warehouse_mapping(self):
+    #     if not self.bom_no:
+    #         return
+
+    #     bom = frappe.get_cached_doc("BOM", self.bom_no)
+
+    #     source_wh = bom.get("custom_source_warehouse")
+    #     wip_wh = bom.get("custom_workinprogress_warehouse")
+    #     fg_wh = bom.get("custom_target_warehouse")
+
+    #     # Set only if present in BOM
+    #     if source_wh:
+    #         self.source_warehouse = source_wh
+    #     if wip_wh:
+    #         self.wip_warehouse = wip_wh
+    #     if fg_wh:
+    #         self.fg_warehouse = fg_wh
+
+    #     # Apply to child table WITHOUT overriding user edits
+    #     if self.source_warehouse:
+    #         for row in self.required_items:
+    #             # Only set if empty OR if you want strict control, remove condition
+    #             if not row.source_warehouse:
+    #                 row.source_warehouse = self.source_warehouse
+
 
 
 
