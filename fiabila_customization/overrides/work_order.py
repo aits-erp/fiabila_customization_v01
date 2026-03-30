@@ -5,55 +5,115 @@ from erpnext.manufacturing.doctype.work_order.work_order import WorkOrder as ERP
 
 class CustomWorkOrder(ERPNextWorkOrder):
 
+    # -----------------------------
+    # 🔹 CORE OVERRIDE POINTS
+    # -----------------------------
+
     def validate(self):
-        # Let ERPNext do all its internal calculations first
         super().validate()
+        self._enforce_custom_warehouses()
 
-        # Apply your custom logic AFTER standard behavior
-        self.apply_custom_warehouse_mapping()
+    def before_save(self):
+        # CRITICAL: last point before DB write
+        self._enforce_custom_warehouses()
 
-    def apply_custom_warehouse_mapping(self):
+    def on_update(self):
+        # Ensures values persist after save/update cycles
+        self._enforce_custom_warehouses()
+
+    def before_submit(self):
+        # Final enforcement before submit
+        self._enforce_custom_warehouses()
+
+    # -----------------------------
+    # 🔹 MOST IMPORTANT OVERRIDE
+    # -----------------------------
+
+    def set_required_items(self, reset_only_qty=False):
+        # Let ERPNext rebuild items first
+        super().set_required_items(reset_only_qty)
+
+        # Immediately override AFTER rebuild
+        self._enforce_custom_warehouses()
+
+    # -----------------------------
+    # 🔹 HARD ENFORCEMENT METHOD
+    # -----------------------------
+
+    def _enforce_custom_warehouses(self):
         if not self.bom_no:
             return
 
         bom = frappe.get_cached_doc("BOM", self.bom_no)
 
         source_wh = bom.get("custom_source_warehouse")
+        wip_wh = bom.get("custom_workinprogress_warehouse")
+        fg_wh = bom.get("custom_target_warehouse")
 
-        if not source_wh:
-            return
+        # 🔴 FORCE override at parent level
+        if source_wh:
+            self.source_warehouse = source_wh
 
-        # Always enforce
-        self.source_warehouse = source_wh
+        if wip_wh:
+            self.wip_warehouse = wip_wh
 
-        for row in self.required_items:
-            row.source_warehouse = source_wh
+        if fg_wh:
+            self.fg_warehouse = fg_wh
 
-    # def apply_custom_warehouse_mapping(self):
-    #     if not self.bom_no:
-    #         return
+        # 🔴 FORCE override at child level (NO CONDITIONS)
+        if source_wh:
+            for row in self.required_items:
+                row.source_warehouse = source_wh
 
-    #     bom = frappe.get_cached_doc("BOM", self.bom_no)
+    # -----------------------------
+    # 🔹 OPTIONAL: BLOCK ERPNext DEFAULT LOGIC
+    # -----------------------------
 
-    #     source_wh = bom.get("custom_source_warehouse")
-    #     wip_wh = bom.get("custom_workinprogress_warehouse")
-    #     fg_wh = bom.get("custom_target_warehouse")
+    def validate_materials(self):
+        """
+        Override ERPNext internal method that may reset warehouses.
+        We call super but enforce again.
+        """
+        super().validate_materials()
+        self._enforce_custom_warehouses()
 
-    #     # Set only if present in BOM
-    #     if source_wh:
-    #         self.source_warehouse = source_wh
-    #     if wip_wh:
-    #         self.wip_warehouse = wip_wh
-    #     if fg_wh:
-    #         self.fg_warehouse = fg_wh
 
-    #     # Apply to child table WITHOUT overriding user edits
-    #     if self.source_warehouse:
-    #         for row in self.required_items:
-    #             # Only set if empty OR if you want strict control, remove condition
-    #             if not row.source_warehouse:
-    #                 row.source_warehouse = self.source_warehouse
+# import frappe
+# from erpnext.manufacturing.doctype.work_order.work_order import WorkOrder as ERPNextWorkOrder
 
+# class CustomWorkOrder(ERPNextWorkOrder):
+
+#     def validate(self):
+#         # Let ERPNext do all its internal calculations first
+#         super().validate()
+
+#         # Apply your custom logic AFTER standard behavior
+#         self.apply_custom_warehouse_mapping()
+
+#     def apply_custom_warehouse_mapping(self):
+#         if not self.bom_no:
+#             return
+
+#         bom = frappe.get_cached_doc("BOM", self.bom_no)
+
+#         source_wh = bom.get("custom_source_warehouse")
+#         wip_wh = bom.get("custom_workinprogress_warehouse")
+#         fg_wh = bom.get("custom_target_warehouse")
+
+#         # Set only if present in BOM
+#         if source_wh:
+#             self.source_warehouse = source_wh
+#         if wip_wh:
+#             self.wip_warehouse = wip_wh
+#         if fg_wh:
+#             self.fg_warehouse = fg_wh
+
+#         # Apply to child table WITHOUT overriding user edits
+#         if self.source_warehouse:
+#             for row in self.required_items:
+#                 # Only set if empty OR if you want strict control, remove condition
+#                 if not row.source_warehouse:
+#                     row.source_warehouse = self.source_warehouse
 
 
 
