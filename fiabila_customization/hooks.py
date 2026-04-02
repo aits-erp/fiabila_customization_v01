@@ -20,3 +20,12 @@ override_doctype_class = {
     "Work Order": "fiabila_customization.overrides.work_order.CustomWorkOrder",
     "Stock Entry": "fiabila_customization.overrides.stock_entry.CustomStockEntry"
 }
+
+fixtures = [
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["module", "=", "Fiabila Customization"]
+        ]
+    }
+]

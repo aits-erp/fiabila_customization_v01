@@ -831,20 +831,39 @@ class ProductionPlanReport:
 		  ]
 		)
   
- 
- 
 	def get_parent_warehouses_with_children(self):
 		parent_warehouse_map = {}
 
 		all_warehouses = frappe.get_all(
 			"Warehouse",
-			fields=["name", "parent_warehouse", "is_group"],
+			fields=["name", "parent_warehouse", "is_group", "custom_include_in_mrp_report"],
 			filters={"disabled": 0}
 		)
 
 		for wh in all_warehouses:
-			if wh.is_group:  # Only parent warehouses
+			# ✅ Case 1: Group warehouses (existing behavior)
+			if wh.is_group:
 				children = get_child_warehouses(wh.name)
 				parent_warehouse_map[wh.name] = children
 
+			# ✅ Case 2: Custom checkbox warehouses
+			elif wh.custom_include_in_mrp_report:
+				parent_warehouse_map[wh.name] = [wh.name]
+
 		return parent_warehouse_map
+ 
+	# def get_parent_warehouses_with_children(self):
+	# 	parent_warehouse_map = {}
+
+	# 	all_warehouses = frappe.get_all(
+	# 		"Warehouse",
+	# 		fields=["name", "parent_warehouse", "is_group"],
+	# 		filters={"disabled": 0}
+	# 	)
+
+	# 	for wh in all_warehouses:
+	# 		if wh.is_group:  # Only parent warehouses
+	# 			children = get_child_warehouses(wh.name)
+	# 			parent_warehouse_map[wh.name] = children
+
+	# 	return parent_warehouse_map
