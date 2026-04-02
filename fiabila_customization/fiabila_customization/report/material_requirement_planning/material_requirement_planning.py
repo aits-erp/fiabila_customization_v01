@@ -830,7 +830,7 @@ class ProductionPlanReport:
 				}
 		  ]
 		)
-  
+
 	def get_parent_warehouses_with_children(self):
 		parent_warehouse_map = {}
 
@@ -841,17 +841,22 @@ class ProductionPlanReport:
 		)
 
 		for wh in all_warehouses:
-			# ✅ Case 1: Group warehouses (existing behavior)
+
+			# ✅ Case 1: Group warehouses (FIXED aggregation)
 			if wh.is_group:
 				children = get_child_warehouses(wh.name)
-				parent_warehouse_map[wh.name] = children
 
-			# ✅ Case 2: Custom checkbox warehouses
+				# 🔥 FIX: include parent warehouse also
+				all_related = list(set(children + [wh.name]))
+
+				parent_warehouse_map[wh.name] = all_related
+
+			# ✅ Case 2: Custom included warehouses (independent)
 			elif wh.custom_include_in_mrp_report:
 				parent_warehouse_map[wh.name] = [wh.name]
 
 		return parent_warehouse_map
- 
+
 	# def get_parent_warehouses_with_children(self):
 	# 	parent_warehouse_map = {}
 
