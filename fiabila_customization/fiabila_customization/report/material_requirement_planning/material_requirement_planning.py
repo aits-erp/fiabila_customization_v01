@@ -116,21 +116,21 @@ class ProductionPlanReport:
 		# Step 3: Aggregate duplicate raw materials BEFORE zeroing stock
 		self.aggregate_duplicate_raw_materials()
 
-	
 		seen_fg_raw_material = []
-		for row in self.data:
-			rm_item = row.get("item_code")
-			so_no = row.get("name")
-			if not rm_item:
-				continue
+
+		# for row in self.data:
+		# 	rm_item = row.get("item_code")
+		# 	so_no = row.get("name")
+		# 	if not rm_item:
+		# 		continue
 			
-			if rm_item not in seen_fg_raw_material:
-				seen_fg_raw_material.append(rm_item)
-			else:
-				for field in list(row.keys()):
-					if field.startswith("stock_"):
-						row[field] = 0.0
-				row["po_qty"] = 0.0
+		# 	if rm_item not in seen_fg_raw_material:
+		# 		seen_fg_raw_material.append(rm_item)
+		# 	else:
+		# 		for field in list(row.keys()):
+		# 			if field.startswith("stock_"):
+		# 				row[field] = 0.0
+		# 		row["po_qty"] = 0.0
 		
 
 		return self.columns, self.data
@@ -272,8 +272,8 @@ class ProductionPlanReport:
 				# Duplicate - zero out
 				row['required_qty'] = 0.0
 				row['balance_qty'] = 0.0
-				row["item_code"] = " "
-				row["raw_material_name"] = " "
+				# row["item_code"] = " "
+				# row["raw_material_name"] = " "
 
 
     
@@ -416,7 +416,7 @@ class ProductionPlanReport:
 
 			warehouse_lookup = {wh["item_code"]: wh for wh in warehouse_stock}
 
-			global_seen_items = set()
+			# global_seen_items = set()
 			stock_fields = set()
 			
 			if warehouse_stock:
@@ -428,17 +428,29 @@ class ProductionPlanReport:
 				stock_info = {field: 0.0 for field in stock_fields}		
 
 				# First occurrence → update actual warehouse stock
-				if item_code not in global_seen_items and item_code in warehouse_lookup:
+				# if item_code not in global_seen_items and item_code in warehouse_lookup:
+				# 	stock_info.update(warehouse_lookup[item_code])
+				# 	po_qty_data = frappe.db.sql("""
+				# 		SELECT SUM(poi.qty) as po_qty
+				# 		FROM `tabPurchase Order Item` poi
+				# 		JOIN `tabPurchase Order` po ON po.name = poi.parent
+				# 		WHERE poi.item_code = %s AND po.status = 'To Receive and Bill'
+				# 	""", (item_code,), as_dict=True)
+				# 	stock_info["po_qty"] = po_qty_data[0].get('po_qty') if po_qty_data[0].get('po_qty') is not None else 0.0
+					
+				# 	global_seen_items.add(item_code)
+				
+				if item_code in warehouse_lookup:
 					stock_info.update(warehouse_lookup[item_code])
+
 					po_qty_data = frappe.db.sql("""
 						SELECT SUM(poi.qty) as po_qty
 						FROM `tabPurchase Order Item` poi
 						JOIN `tabPurchase Order` po ON po.name = poi.parent
 						WHERE poi.item_code = %s AND po.status = 'To Receive and Bill'
 					""", (item_code,), as_dict=True)
+
 					stock_info["po_qty"] = po_qty_data[0].get('po_qty') if po_qty_data[0].get('po_qty') is not None else 0.0
-					
-					global_seen_items.add(item_code)
 				d.update(stock_info)
 
 		elif self.filters.based_on == "Work Order":
@@ -465,7 +477,8 @@ class ProductionPlanReport:
 				stock_info = {field: 0.0 for field in stock_fields}
 
 				# First time seen → update with actual warehouse stock
-				if item_code not in global_seen_items and item_code in warehouse_lookup:
+				# if item_code not in global_seen_items and item_code in warehouse_lookup:
+				if item_code in warehouse_lookup:
 					stock_info.update(warehouse_lookup[item_code])
 					
 					po_qty_data = frappe.db.sql("""
@@ -476,7 +489,7 @@ class ProductionPlanReport:
 					""", (item_code,), as_dict=True)
 					stock_info["po_qty"] = po_qty_data[0].get('po_qty') if po_qty_data[0].get('po_qty') is not None else 0.0
 
-					global_seen_items.add(item_code)
+					# global_seen_items.add(item_code)
 
 				# Merge stock info into raw material row
 				d.update(stock_info)
